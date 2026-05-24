@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora — Dinheiro Deixado na Mesa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent2: #e8c99a;
+    --text: #f0ece4;
+    --muted: #777;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 48px; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(200,169,110,0.4);
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 46px);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 20px;
+    padding-left: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+  }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  @media (max-width: 540px) {
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  label { font-size: 12px; font-weight: 500; color: #999; line-height: 1.4; }
+
+  .input-wrap { position: relative; display: flex; align-items: center; }
+  .prefix {
+    position: absolute; left: 13px;
+    font-size: 13px; font-weight: 600; color: var(--accent); pointer-events: none;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus { border-color: var(--accent); }
+  .has-prefix input { padding-left: 30px; }
+
+  .nota { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .divider {
+    display: flex; align-items: center; gap: 14px; margin: 32px 0 18px;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  #results {
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  #results.visible { opacity: 1; transform: translateY(0); }
+
+  .period-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .toggle-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 7px 16px; cursor: pointer; transition: all 0.15s;
+  }
+  .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #0d0d0d; }
+
+  .big-result {
+    background: linear-gradient(135deg, #191100 0%, #141000 60%, #0d0d0d 100%);
+    border: 1px solid var(--accent);
+    border-radius: 20px; padding: 36px 28px; text-align: center;
+    position: relative; overflow: hidden; margin-bottom: 12px;
+  }
+  .big-result::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% -10%, rgba(200,169,110,0.1) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .big-result-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  .big-result-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(40px, 9vw, 68px); color: var(--text); line-height: 1; margin-bottom: 6px;
+  }
+  .big-result-period { font-size: 13px; color: var(--muted); }
+
+  .breakdown {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 6px 0; margin-bottom: 12px;
+  }
+  .brow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+  }
+  .brow:last-child { border-bottom: none; }
+  .brow-left { display: flex; align-items: center; gap: 12px; }
+  .brow-icon { font-size: 18px; }
+  .brow-name { font-size: 14px; color: #ccc; font-weight: 500; }
+  .brow-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .brow-value { font-size: 17px; font-weight: 700; color: var(--text); text-align: right; }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 480px) { .stat-row { grid-template-columns: 1fr; } }
+
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; text-align: center;
+  }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--accent); margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  .alerta {
+    background: #110800; border-left: 3px solid var(--accent);
+    border-radius: 0 12px 12px 0; padding: 14px 18px;
+    font-size: 13px; color: #bbb; line-height: 1.65; margin-bottom: 12px;
+  }
+  .alerta strong { color: var(--accent2); }
+
+  .metodologia {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px;
+    font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 20px;
+  }
+  .metodologia strong { color: #999; }
+
+  .btn {
+    width: 100%; background: var(--accent); color: #0d0d0d; border: none;
+    border-radius: 12px; padding: 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn:hover { background: var(--accent2); }
+
+  @media print {
+    .no-print { display: none; }
+    body { background: white; color: #111; padding: 20px; }
+    .big-result { background: #f8f4ed; border-color: #c8a96e; }
+    .big-result-number, h1 { color: #111; }
+    .card, .breakdown, .stat-card, .metodologia, .alerta { background: #f5f5f5; border-color: #ddd; }
+    .brow-name, .brow-value, .stat-value, .brow-sub { color: #333; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="badge">Diagnóstico de Receita</div>
+    <h1>Quanto você deixa<br><em>na mesa</em> todo mês?</h1>
+    <p>Preencha os dados do seu restaurante e veja o potencial perdido por não oferecer ativamente entradas, sobremesas e café.</p>
+  </header>
+
+  <!-- OPERAÇÃO -->
+  <div class="section-label">Operação</div>
+  <div class="card">
+    <div class="grid-3">
+      <div class="field">
+        <label>Clientes por turno</label>
+        <div class="input-wrap">
+          <input type="number" id="clientesTurno" value="40" min="1" oninput="calcular()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Turnos por dia</label>
+        <div class="input-wrap">
+          <input type="number" id="turnosDia" value="1" min="1" max="4" oninput="calcular()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Dias aberto por semana</label>
+        <div class="input-wrap">
+          <input type="number" id="diasSemana" value="6" min="1" max="7" oninput="calcular()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKET -->
+  <div class="section-label">Ticket Médio</div>
+  <div class="card">
+    <div class="grid-2">
+      <div class="field">
+        <label>Por mesa (R$)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">R$</span>
+          <input type="number" id="ticketMesa" value="" min="0" placeholder="—" oninput="onTicketMesa()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Por pessoa (R$)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">R$</span>
+          <input type="number" id="ticketPessoa" value="" min="0" placeholder="—" oninput="onTicketPessoa()">
+        </div>
+      </div>
+    </div>
+    <p class="nota">Preencha apenas um. Se preencher por pessoa, usamos média de 2,5 pessoas por mesa.</p>
+  </div>
+
+  <!-- PREÇOS -->
+  <div class="section-label">Preço Médio dos Itens</div>
+  <div class="card">
+    <div class="grid-3">
+      <div class="field">
+        <label>🥗 Entrada</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">R$</span>
+          <input type="number" id="precoEntrada" value="32" min="0" oninput="calcular()">
+        </div>
+      </div>
+      <div class="field">
+        <label>🍮 Sobremesa</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">R$</span>
+          <input type="number" id="precoSobremesa" value="28" min="0" oninput="calcular()">
+        </div>
+      </div>
+      <div class="field">
+        <label>☕ Café</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">R$</span>
+          <input type="number" id="precoCafe" value="12" min="0" oninput="calcular()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">Resultado</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div id="results">
+
+    <div class="period-toggle no-print">
+      <button class="toggle-btn active" onclick="setPeriodo('semana')" id="btnSemana">Semana</button>
+      <button class="toggle-btn" onclick="setPeriodo('mes')" id="btnMes">Mês</button>
+      <button class="toggle-btn" onclick="setPeriodo('ano')" id="btnAno">Ano</button>
+    </div>
+
+    <div class="big-result">
+      <div class="big-result-label">Receita não capturada</div>
+      <div class="big-result-number" id="totalPerdido">R$ 0</div>
+      <div class="big-result-period" id="periodLabel">por semana</div>
+    </div>
+
+    <div class="breakdown">
+      <div class="brow">
+        <div class="brow-left">
+          <div class="brow-icon">🥗</div>
+          <div>
+            <div class="brow-name">Entrada</div>
+            <div class="brow-sub" id="subEntrada">—</div>
+          </div>
+        </div>
+        <div class="brow-value" id="valEntrada">R$ 0</div>
+      </div>
+      <div class="brow">
+        <div class="brow-left">
+          <div class="brow-icon">🍮</div>
+          <div>
+            <div class="brow-name">Sobremesa</div>
+            <div class="brow-sub" id="subSobremesa">—</div>
+          </div>
+        </div>
+        <div class="brow-value" id="valSobremesa">R$ 0</div>
+      </div>
+      <div class="brow">
+        <div class="brow-left">
+          <div class="brow-icon">☕</div>
+          <div>
+            <div class="brow-name">Café</div>
+            <div class="brow-sub" id="subCafe">—</div>
+          </div>
+        </div>
+        <div class="brow-value" id="valCafe">R$ 0</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-value" id="statAdicionalMesa">R$ 0</div>
+        <div class="stat-label">Receita adicional<br>por mesa</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statPercentual">—</div>
+        <div class="stat-label">Aumento sobre<br>o ticket atual</div>
+      </div>
+    </div>
+
+    <div class="alerta" id="alertaTexto"></div>
+
+    <div class="metodologia">
+      <strong>Como calculamos:</strong> Usamos taxas conservadoras de conversão com oferecimento ativo:
+      <strong>35%</strong> das mesas pedem entrada · <strong>30%</strong> pedem sobremesa · <strong>45%</strong> pedem café.
+      São médias baseadas em operações com treinamento ativo de vendas.
+    </div>
+
+    <button class="btn no-print" onclick="window.print()">📄 Exportar como PDF</button>
+
+  </div>
+
+</div>
+<script>
+  const TAXA_ENTRADA = 0.35;
+  const TAXA_SOBREMESA = 0.30;
+  const TAXA_CAFE = 0.45;
+
+  let periodo = 'semana';
+
+  function fmt(v) {
+    return 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  }
+
+  function onTicketMesa() {
+    document.getElementById('ticketPessoa').value = '';
+    calcular();
+  }
+  function onTicketPessoa() {
+    document.getElementById('ticketMesa').value = '';
+    calcular();
+  }
+
+  function setPeriodo(p) {
+    periodo = p;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    const ids = { semana: 'btnSemana', mes: 'btnMes', ano: 'btnAno' };
+    document.getElementById(ids[p]).classList.add('active');
+    calcular();
+  }
+
+  function calcular() {
+    const clientesTurno = parseFloat(document.getElementById('clientesTurno').value) || 0;
+    const turnosDia     = parseFloat(document.getElementById('turnosDia').value) || 1;
+    const diasSemana    = parseFloat(document.getElementById('diasSemana').value) || 6;
+
+    const ticketMesaVal   = parseFloat(document.getElementById('ticketMesa').value) || 0;
+    const ticketPessoaVal = parseFloat(document.getElementById('ticketPessoa').value) || 0;
+    const ticketMesa = ticketMesaVal > 0 ? ticketMesaVal : ticketPessoaVal * 2.5;
+
+    const precoEntrada   = parseFloat(document.getElementById('precoEntrada').value) || 0;
+    const precoSobremesa = parseFloat(document.getElementById('precoSobremesa').value) || 0;
+    const precoCafe      = parseFloat(document.getElementById('precoCafe').value) || 0;
+
+    // Mesas por semana (2.5 pessoas por mesa em média)
+    const mesasDia     = (clientesTurno * turnosDia) / 2.5;
+    const mesasSemana  = mesasDia * diasSemana;
+
+    // Receita potencial por semana
+    const eSemana = mesasSemana * TAXA_ENTRADA * precoEntrada;
+    const sSemana = mesasSemana * TAXA_SOBREMESA * precoSobremesa;
+    const cSemana = mesasSemana * TAXA_CAFE * precoCafe;
+    const tSemana = eSemana + sSemana + cSemana;
+
+    const mult  = periodo === 'semana' ? 1 : periodo === 'mes' ? 4.33 : 52;
+    const label = periodo === 'semana' ? 'por semana' : periodo === 'mes' ? 'por mês' : 'por ano';
+
+    const total    = tSemana * mult;
+    const entrada  = eSemana * mult;
+    const sobremesa= sSemana * mult;
+    const cafe     = cSemana * mult;
+
+    document.getElementById('totalPerdido').textContent = fmt(total);
+    document.getElementById('periodLabel').textContent  = label;
+    document.getElementById('valEntrada').textContent   = fmt(entrada);
+    document.getElementById('valSobremesa').textContent = fmt(sobremesa);
+    document.getElementById('valCafe').textContent      = fmt(cafe);
+
+    const mesasPeriodo = mesasSemana * mult;
+    document.getElementById('subEntrada').textContent =
+      `${Math.round(mesasPeriodo * TAXA_ENTRADA)} mesas · R$ ${precoEntrada} cada`;
+    document.getElementById('subSobremesa').textContent =
+      `${Math.round(mesasPeriodo * TAXA_SOBREMESA)} mesas · R$ ${precoSobremesa} cada`;
+    document.getElementById('subCafe').textContent =
+      `${Math.round(mesasPeriodo * TAXA_CAFE)} mesas · R$ ${precoCafe} cada`;
+
+    const adicionalMesa = TAXA_ENTRADA * precoEntrada + TAXA_SOBREMESA * precoSobremesa + TAXA_CAFE * precoCafe;
+    document.getElementById('statAdicionalMesa').textContent = fmt(adicionalMesa);
+    document.getElementById('statPercentual').textContent =
+      ticketMesa > 0 ? ((adicionalMesa / ticketMesa) * 100).toFixed(0) + '%' : '—';
+
+    const anoVal = tSemana * 52;
+    document.getElementById('alertaTexto').innerHTML =
+      `⚠️ Sem treinamento de oferecimento ativo, esse restaurante perde <strong>${fmt(anoVal)} por ano</strong> — apenas com entradas, sobremesas e café. Isso sem contar bebidas, porções extras e outros upsells.`;
+
+    document.getElementById('results').classList.add('visible');
+  }
+
+  window.addEventListener('DOMContentLoaded', calcular);
+</script>
+</body>
+</html>
